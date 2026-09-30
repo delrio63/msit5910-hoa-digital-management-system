@@ -18,7 +18,7 @@ The system is built using:
 - CI/CD tagging for release management  
 
 This repository contains the working prototype developed for Unit 4: Initial Implementation and Demo Presentation.
-## Repository Structure
+```
 msit5910-hoa-digital-management-system/
 │
 ├── src/                     # Application source code (Streamlit app, modules)
@@ -35,8 +35,7 @@ msit5910-hoa-digital-management-system/
 │   └── discussion_forums/
 │
 └── README.md                # Project overview (this file)
-
-
+```
 ## Running the Application
 
 ### Prerequisites
