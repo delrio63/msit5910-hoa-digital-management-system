@@ -88,7 +88,7 @@ else:
             st.caption(f"Posted by {ann['author']} on {ann['timestamp']}")
             st.divider()
 
-    elif choice == "Post Announcement" and rbac.is_admin(st.session_state.role):
+    elif choice == "Post Announcement" and st.session_state.role in ["admin", "board_member"]:
         st.subheader("Create Announcement")
         title = st.text_input("Announcement Title")
         message = st.text_area("Announcement Message")
