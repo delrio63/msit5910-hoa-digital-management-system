@@ -4,5 +4,29 @@
         "description": "fix the broken pipe",
         "status": "In Progress",
         "timestamp": "2026-09-28 22:13:24"
+    },
+    {
+        "resident": "resident",
+        "description": "this is s new request",
+        "status": "In Progress",
+        "timestamp": "2026-09-30 21:48:36"
+    },
+    {
+        "resident": "resident",
+        "description": "Mailbox got and needs to be repaired",
+        "status": "In Progress",
+        "timestamp": "2026-09-30 22:14:33"
+    },
+    {
+        "resident": "resident",
+        "description": "there is a hole in the road that needs repair",
+        "status": "Completed",
+        "timestamp": "2026-09-30 22:21:31"
+    },
+    {
+        "resident": "resident",
+        "description": "The Community pool is dirty. please get the cleaned.",
+        "status": "In Progress",
+        "timestamp": "2026-09-30 22:26:44"
     }
 ]
