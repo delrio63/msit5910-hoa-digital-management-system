@@ -33,3 +33,18 @@ def validate_upload(name: str, content: bytes) -> bool:
     if len(content) > 10 * 1024 * 1024:  # 10 MB limit
         return False
     return True
+
+def list_documents() -> list:
+    """Return all documents with their latest version."""
+    return [
+        {
+            "doc_id": doc_id,
+            "name": versions[-1]["name"],
+            "version_id": versions[-1]["version_id"],
+            "uploaded_by": versions[-1]["uploader"],
+            "timestamp": versions[-1]["uploaded_at"]
+        }
+        for doc_id, versions in _docs.items()
+    ]
+
+

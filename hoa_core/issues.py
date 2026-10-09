@@ -41,6 +41,12 @@ def get_issue(issue_id: str) -> Dict:
         raise KeyError("Issue not found")
     return _issues[issue_id]
 
+def get_all_issues() -> list:
+    """Return all issues in the system."""
+    return [
+        {**issue, "id": issue_id}
+        for issue_id, issue in _issues.items()
+    ]
 def list_issues(filter_by: dict | None = None):
     results = list(_issues.values())
     if not filter_by:
@@ -53,5 +59,11 @@ def list_issues(filter_by: dict | None = None):
         return True
 
     return [i for i in results if matches(i)]
+def get_issues_by_user(username: str):
+    return [
+        {**issue, "id": issue_id}
+        for issue_id, issue in _issues.items()
+        if issue.get("reporter") == username
+    ]
 
 

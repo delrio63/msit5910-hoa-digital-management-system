@@ -39,3 +39,18 @@ def get_role(username: str) -> Optional[str]:
 def authorize(username: str, allowed_roles: list) -> bool:
     role = get_role(username)
     return role in allowed_roles
+
+def list_users() -> list:
+    """Return all users with their roles."""
+    return [
+        {
+            "username": username,
+            "role": user["role"]
+        }
+        for username, user in _users.items()
+    ]
+
+# Temporary default users for testing
+create_user("admin", "admin123", role="admin")
+create_user("board", "board123", role="board")
+create_user("resident", "resident123", role="resident")
