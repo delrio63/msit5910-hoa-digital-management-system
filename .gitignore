@@ -1,0 +1,28 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Streamlit
+.streamlit/
+
+# Local data storage
+data/
+documents_storage/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Capstone artifacts
+*.docx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.drawio
+
+# VS Code workspace
+.vscode/

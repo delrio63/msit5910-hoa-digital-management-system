@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 import os
+import streamlit as st
 
 # Always load/save JSON from the project folder
 DATA_FILE = os.path.join(os.path.dirname(__file__), "maintenance_data.json")
@@ -36,9 +37,19 @@ def get_requests():
     """Return all maintenance requests."""
     return load_requests()
 
+def get_requests_by_user(resident):
+    """Return all maintenance requests submitted by a specific resident."""
+    requests = load_requests()
+    return [r for r in requests if r.get("resident") == resident]
+
 def update_status(index, new_status):
     """Admin/Board updates the status of a request."""
     requests = load_requests()
     requests[index]["status"] = new_status
     save_requests(requests)
+
+def init_state():
+    """Initialize maintenance data safely inside Streamlit."""
+    if "maintenance_data" not in st.session_state:
+        st.session_state.maintenance_data = load_requests()
 

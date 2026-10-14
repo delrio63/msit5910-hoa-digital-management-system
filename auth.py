@@ -36,3 +36,4 @@ def list_users() -> list:
         {"username": username, "role": user["role"]}
         for username, user in USERS.items()
     ]
+
