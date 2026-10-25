@@ -51,8 +51,18 @@ msit5910-hoa-digital-management-system/
 
 The application will open in your browser at:
 
-
 ---
+
+## Demo Credentials
+
+The following accounts contain synthetic test data only:
+
+- **Administrator:** 'admin' / 'admin123'
+- **Board member:** 'board' / 'board123'
+- **Resident:** 'resident' / 'resident123'
+
+**Note:** This repository contains an academic prototype and is not intended for production use.
+
 
 ## Security & Ethical Considerations
 
@@ -91,8 +101,6 @@ This repository supports the following MSIT 5910 capstone components:
 - Unit 2: Project proposal and planning  
 - Unit 3: Ethical and security integration  
 - Unit 4: Initial implementation and demo  
-
-All related artifacts are stored in the `/docs` directory.
 
 ---
 

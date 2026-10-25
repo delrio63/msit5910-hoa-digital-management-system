@@ -26,3 +26,13 @@ Thumbs.db
 
 # VS Code workspace
 .vscode/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Local databases and runtime data
+*.db
+*.sqlite
+*.sqlite3
+maintenance_data.json
