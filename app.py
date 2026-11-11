@@ -1,3 +1,6 @@
+import os
+import uuid
+
 import streamlit as st
 import announcements
 import maintenance
@@ -166,7 +169,6 @@ def board_dashboard():
         "Announcements",
         "Submit Announcement Request",
         "Issues and Requests",
-        "Documents",
         "Logout"
     ]
     choice = st.sidebar.radio("Navigation", menu)
@@ -346,6 +348,7 @@ def board_dashboard():
                 st.caption(f"Uploaded by {doc['uploaded_by']} on {doc['uploaded_at']}")
                 st.divider()
 
+
 # ---------------------------
 # ADMIN DASHBOARD
 # ---------------------------
@@ -407,6 +410,7 @@ def admin_dashboard():
             for u in users:
                 st.write(f"**{u['username']}** — Role: {u['role']}")
             st.divider()
+
 
     # ---------------------------
     # ALL REQUESTS
@@ -477,31 +481,83 @@ def admin_dashboard():
     elif choice == "Documents":
         st.subheader("Document Repository")
 
-        uploaded_file = st.file_uploader(
-            "Upload a new governing document",
-            key="board_doc_upload"
+        # If Save was just clicked, DO NOT render uploader at all
+        if st.session_state.get("suppress_uploader", False):
+            st.session_state.pop("suppress_uploader")
+            st.rerun()
+
+        # ONLY render uploader if no pending file
+        if "admin_pending_doc" not in st.session_state:
+            uploader_key = st.session_state.get("admin_uploader_key", "admin_doc_upload_v2")
+
+            uploaded_file = st.file_uploader(
+                "Upload a new governing document",
+                key=uploader_key
         )
 
-        # Store file temporarily until user clicks Save
-        if uploaded_file and "board_pending_doc" not in st.session_state:
-            st.session_state.board_pending_doc = uploaded_file
-            st.info("File ready to save. Click 'Save Document' to store it permanently.")
+            if uploaded_file:
 
-        # If a file is pending, show Save button
-        if "board_pending_doc" in st.session_state:
+                # Validate BEFORE storing in session
+                file_name = uploaded_file.name
+                file_bytes = uploaded_file.getvalue()
+                ext = os.path.splitext(file_name)[1].lower()
+
+                # Invalid extension
+                if ext not in {".pdf", ".docx"}:
+                    st.error("Not a valid file. Only .docx and .pdf are allowed.")
+                    return
+
+                # Oversized file
+                if len(file_bytes) > 5 * 1024 * 1024:
+                    st.error("File size too big. Size limit is 5 MB.")
+                    return
+
+                # If valid → store in session
+                st.session_state.admin_pending_doc = uploaded_file
+                st.info("File ready to save. Click 'Save Document' to store it permanently.")
+
+
+        # If a file is pending, show Save button FIRST
+        if "admin_pending_doc" in st.session_state:
             if st.button("Save Document"):
+
+
+                file_obj = st.session_state.admin_pending_doc
+                file_name = file_obj.name
+                file_bytes = file_obj.getvalue()
+
+                # ---------------------------
+                # VALIDATION CHECKS
+                # ---------------------------
+
+                # Oversized file
+                if len(file_bytes) > 10 * 1024 * 1024:
+                    st.error("File size too big. Size limit is 10 MB.")
+                    return
+                
+                # Validate file type
+                ext = os.path.splitext(file_name)[1].lower()
+                if ext not in {".pdf", ".docx"}:
+                    st.error("Not a valid file. Only .docx and .pdf are allowed.")
+                    return
+                
+
+                # ---------------------------
+                # SAVE DOCUMENT (VALID)
+                # ---------------------------
                 documents.upload_document(
-                    st.session_state.board_pending_doc,
-                    st.session_state.board_pending_doc.name,
+                    st.session_state.admin_pending_doc,
+                    st.session_state.admin_pending_doc.name,
                     st.session_state["user"]
                 )
+                
                 st.success("Document uploaded successfully!")
 
                 # SAFE CLEANUP
-                if "board_pending_doc" in st.session_state:
-                    del st.session_state.board_pending_doc
+                st.session_state.pop("admin_pending_doc", None)
 
-                st.session_state.pop("board_doc_upload", None)
+                st.session_state.admin_uploader_key = f"admin_doc_upload_v2_{uuid.uuid4()}"
+
                 st.rerun()
 
         # Display documents
@@ -513,15 +569,16 @@ def admin_dashboard():
             for doc in doc_list:
                 st.markdown(f"### {doc['name']} (v{doc['version']})")
                 st.caption(f"Uploaded by {doc['uploaded_by']} on {doc['uploaded_at']}")
-                st.divider()
                 
+                st.divider()
+
+
     # ---------------------------
     # ANNOUNCEMENTS
     # ---------------------------
-   
     elif choice == "Announcements":
         st.title("Announcement Management")
-        
+
         # Show Replace-All success message after rerun
         if st.session_state.get("replace_success"):
             st.success("All announcements replaced.")
@@ -536,14 +593,11 @@ def admin_dashboard():
             st.subheader("Pending Announcements (Board Submissions)")
             pending = announcements.get_pending()
 
-        # ---------------------------
         # Pending announcements list
-        # ---------------------------
         if not pending:
             st.info("No pending announcements.")
         else:
             for ann in pending:
-                 # Refresh this announcement from the latest JSON
                 refreshed = announcements.get_pending()[pending.index(ann)]
                 ann = refreshed
 
@@ -557,17 +611,13 @@ def admin_dashboard():
 
                 col1, col2, col3, col4 = st.columns(4)
 
-                # Edit Mode toggle
                 if col2.button(f"Edit", key=f"edit_{ann['id']}"):
                     st.session_state[f"edit_mode_{ann['id']}"] = True
 
-                # Show edit fields when in edit mode
                 if st.session_state.get(f"edit_mode_{ann['id']}", False):
-
                     new_title = st.text_input("Edit Title", value=ann["title"], key=f"title_{ann['id']}")
                     new_message = st.text_area("Edit Message", value=ann["message"], key=f"msg_{ann['id']}")
 
-                    # Save Edits
                     if col1.button(f"Save Edits", key=f"save_{ann['id']}"):
                         announcements.edit_pending(
                             ann_id=ann["id"],
@@ -575,107 +625,37 @@ def admin_dashboard():
                             new_message=new_message,
                             editor=st.session_state["user"]
                         )
-                        # Refresh session_state with updated JSON
+
                         st.session_state.announcements_data = announcements._load_data()
-
-
                         st.session_state[f"saved_edits_{ann['id']}"] = True
                         st.success("Pending announcement updated.")
                         st.session_state["reload_pending"] = True
                         st.session_state[f"edit_mode_{ann['id']}"] = False
                         st.rerun()
 
-                # Publish
-                if col3.button(f"Publish", key=f"pub_{ann['id']}"):
-                    if not st.session_state.get(f"saved_edits_{ann['id']}", False):
-                        st.error("Publish not complete. Edits not saved. Click 'Save Edits' first.")
-                    else:
-                        announcements.publish_pending(ann["id"], editor=st.session_state["user"])
-                        st.success("Announcement published.")
+                    if col3.button(f"Publish", key=f"pub_{ann['id']}"):
+                        if not st.session_state.get(f"saved_edits_{ann['id']}", False):
+                            st.error("Publish not complete. Edits not saved. Click 'Save Edits' first.")
+                        else:
+                            announcements.publish_pending(ann["id"], editor=st.session_state["user"])
+                            st.success("Announcement published.")
+                            st.rerun()
+
+                    if col4.button(f"Delete Pending", key=f"del_pending_{ann['id']}"):
+                        announcements.delete_pending(ann["id"])
+                        st.warning("Pending announcement deleted.")
+                        st.session_state["reload_pending"] = True
                         st.rerun()
 
-                # Delete Pending
-                if col4.button(f"Delete Pending", key=f"del_pending_{ann['id']}"):
-                    announcements.delete_pending(ann["id"])
-                    st.warning("Pending announcement deleted.")
-                    st.session_state["reload_pending"] = True
-                    st.rerun()
-
                 st.divider()
 
-
-        # ---------------------------
-        # Add new announcement
-        # ---------------------------
-        st.subheader("Add New Announcement (Append Mode)")
-        new_title = st.text_input("Title", key="new_title")
-        new_message = st.text_area("Message", key="new_message")
-
-        if st.button("Add Announcement"):
-            if new_title and new_message:
-                announcements.add_announcement(
-                    title=new_title,
-                    message=new_message,
-                    author=st.session_state["user"]
-                )
-                st.success("Announcement added.")
-                st.session_state["reload_pending"] = True
-                st.rerun()
-            else:
-                st.error("Please enter both a title and a message.")
-
-        st.divider()
-
-        # ---------------------------
-        # Replace ALL announcements
-        # ---------------------------
-        st.subheader("Replace ALL Published Announcements")
-        rep_title = st.text_input("Replacement Title", key="rep_title")
-        rep_message = st.text_area("Replacement Message", key="rep_message")
-
-        if st.button("Replace All Announcements"):
-            if rep_title and rep_message:
-                announcements.replace_announcements(
-                    title=rep_title,
-                    message=rep_message,
-                    author=st.session_state["user"]
-                )
-                st.success("All announcements replaced.")
-                st.session_state["reload_pending"] = True
-                st.session_state["replace_success"] = True
-                st.rerun()
-            else:
-                st.error("Please enter both a title and a message.")
-
-        st.divider()
-
-        # ---------------------------
-        # Published announcements
-        # ---------------------------
-        st.subheader("Published Announcements")
-        published = announcements.get_published()
-
-        if not published:
-            st.info("No published announcements.")
-        else:
-            for ann in published:
-                st.markdown(f"### {ann['title']}")
-                st.write(ann["message"])
-                st.caption(f"Published by {ann['published_by']} on {ann['published_at']}")
-
-                if st.button(f"Delete Published", key=f"del_pub_{ann['id']}"):
-                    announcements.delete_published(ann["id"])
-                    st.warning("Published announcement deleted.")
-                    st.rerun()
-
-                st.divider()
-
-# ---------------------------
-# LOGOUT 
-# ---------------------------
+    # ---------------------------
+    # LOGOUT
+    # ---------------------------
     elif choice == "Logout":
         st.session_state.clear()
         st.rerun()
+
     
 # ---------------------------
 # MAIN APP ROUTER

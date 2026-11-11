@@ -83,12 +83,25 @@ def list_versions(doc_id: str) -> List[Dict]:
 # ---------------------------
 # Validate upload
 # ---------------------------
+import os
+
+ALLOWED_EXTENSIONS = {".pdf", ".docx"}
+
 def validate_upload(name: str, content: bytes) -> bool:
     if not name or not content:
         return False
-    if len(content) > 10 * 1024 * 1024:  # 10 MB limit
+
+    # Check file size
+    if len(content) > 5 * 1024 * 1024:  # 5 MB limit
         return False
+
+    # Check allowed extensions
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return False
+
     return True
+
 
 
 # ---------------------------

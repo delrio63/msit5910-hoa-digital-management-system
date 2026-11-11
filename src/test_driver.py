@@ -2,6 +2,7 @@ from hoa_core.auth import create_user, authenticate, get_role
 from hoa_core.documents import upload_document, get_latest_version, list_versions
 from hoa_core.issues import create_issue, assign_issue, update_issue_status, get_issue, list_issues
 from hoa_core.messages import post_message, get_thread
+from io import BytesIO
 
 print("=== AUTH TESTS ===")
 create_user("alice", "password123", "admin")
@@ -9,7 +10,8 @@ print("Authenticate:", authenticate("alice", "password123"))
 print("Role:", get_role("alice"))
 
 print("\n=== DOCUMENT TESTS ===")
-doc_id = upload_document("rules.pdf", b"content", "alice")
+# doc_id = upload_document("rules.pdf", b"content", "alice")
+doc_id = upload_document(BytesIO(b"content"), "rules.pdf", "alice")
 print("Doc ID:", doc_id)
 print("Latest Version:", get_latest_version(doc_id))
 print("All Versions:", list_versions(doc_id))
